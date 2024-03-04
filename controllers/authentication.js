@@ -22,11 +22,11 @@ const login = async (req, res) => {
           .status(httpStatusCodes.NOT_FOUND)
           .json({ error: "user not found" });
 
-      const validUser = await bcrypt.compare(password, user.password)
+      const validUser = await bcrypt.compare(password, user.password);
       if (!validUser)
         return res
-            .status(httpStatusCodes.NOT_ACCEPTABLE)
-            .json({error: "wrong credentials"});
+          .status(httpStatusCodes.NOT_ACCEPTABLE)
+          .json({ error: "wrong credentials" });
 
       console.log("user  found");
       const { username, _id, userType, fullName } = user;
@@ -34,7 +34,6 @@ const login = async (req, res) => {
 
       // generate tokens with user data
       GenerateToken(req, res);
-
     })
     .catch((error) => {
       console.log(error);
@@ -51,46 +50,44 @@ const signup = async (req, res) => {
       .status(httpStatusCodes.BAD_REQUEST)
       .json({ error: "missing request data" });
 
-  await User.findOne({ email }).then(async (user) => {
-    // email already registered
-    if (user)
-      return res
-        .status(httpStatusCodes.CONFLICT)
-        .json({ error: "Email already registered" });
-
-    await User.findOne({ username })
-        .then(async (user) => {
+  await User.findOne({ email })
+    .then(async (user) => {
+      // email already registered
       if (user)
-        // username already taken
         return res
           .status(httpStatusCodes.CONFLICT)
-          .json({ error: "Username already taken" });
-      await User.findOne({ phoneNumber })
-          .then(async (user) => {
+          .json({ error: "Email already registered" });
+
+      await User.findOne({ username }).then(async (user) => {
         if (user)
-          // phone number already registered
+          // username already taken
           return res
             .status(httpStatusCodes.CONFLICT)
             .json({ error: "Username already taken" });
+        await User.findOne({ phoneNumber }).then(async (user) => {
+          if (user)
+            // phone number already registered
+            return res
+              .status(httpStatusCodes.CONFLICT)
+              .json({ error: "Username already taken" });
 
-        let hashedPassword = await bcrypt.hash(password, 10);
-        await User.create({
-          username,
-          fullName,
-          phoneNumber,
-          email,
-          password: hashedPassword,
-          userType: "unknown",
-        })
-            .then((user) => {
-              if (user)
-                return res
-                    .status(httpStatusCodes.ACCEPTED)
-                    .json({ success: "user created" });
-            })
+          let hashedPassword = await bcrypt.hash(password, 10);
+          await User.create({
+            username,
+            fullName,
+            phoneNumber,
+            email,
+            password: hashedPassword,
+            userType: "unknown",
+          }).then((user) => {
+            if (user)
+              return res
+                .status(httpStatusCodes.ACCEPTED)
+                .json({ success: "user created" });
           });
-    });
-  })
+        });
+      });
+    })
     .catch((error) => {
       console.log("Error" + error);
       return res
@@ -121,31 +118,30 @@ const GenerateToken = async (req, res, details) => {
   await Token.findOne({ user: req.user.username })
     .then(async (tokenData) => {
       if (tokenData) {
-        console.log("updating token")
+        console.log("updating token");
         await Token.findOneAndUpdate(
-            { user: req.user.username },
-            { accessToken: ACCESS_TOKEN, refreshToken: REFRESH_TOKEN }
-        )}
-      else {
-        console.log("writing new token")
-        await Token.create(
-            { user: req.user.username,
-            accessToken: ACCESS_TOKEN,
-            refreshToken: REFRESH_TOKEN})
-      }
-        return res.status(httpStatusCodes.OK).json({
-          access: ACCESS_TOKEN,
-          refresh: REFRESH_TOKEN,
+          { user: req.user.username },
+          { accessToken: ACCESS_TOKEN, refreshToken: REFRESH_TOKEN }
+        );
+      } else {
+        console.log("writing new token");
+        await Token.create({
           user: req.user.username,
-          userType: req.user.userType,
-          fullName: req.user.fullName,
+          accessToken: ACCESS_TOKEN,
+          refreshToken: REFRESH_TOKEN,
         });
-      })
+      }
+      return res.status(httpStatusCodes.OK).json({
+        access: ACCESS_TOKEN,
+        refresh: REFRESH_TOKEN,
+        user: req.user.username,
+        userType: req.user.userType,
+        fullName: req.user.fullName,
+      });
+    })
     .catch((err) => {
-      console.log(err)
-      return res
-        .status(httpStatusCodes.NO_CONTENT)
-        .json({ error: err });
+      console.log(err);
+      return res.status(httpStatusCodes.NO_CONTENT).json({ error: err });
     });
 };
 

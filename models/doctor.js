@@ -15,3 +15,5 @@ const Doctor = mongoose.Schema({
     calender: [],       // *{ title, text, date, time, status(done/not)}
     permissions: []     // *{ perm: val} e.g { add_patient: private, calender: public }
 })
+
+module.exports = mongoose.model("Doctor", Doctor);

@@ -8,7 +8,7 @@ const Patient = mongoose.Schema({
 
     doctors : [],        // *{ usernames }
     notes: [],           // *{ text, date, doctor }
-    calender: [],        // *{ title, text, date, time, status(done/not)}
+    calender: [],        // *{ id(uuid), title, description, date, time, status(done/not)}
     illnesses: [],       // *{ title, date}
     medications: [],     // *{ title, duration, date, }
     prescriptions: [],   // *{ doctor, medicine, date, qty }
