@@ -5,15 +5,14 @@ const Doctor = mongoose.Schema({
     type: String,
     required: true,
   },
+  profilePicture,
 
   hospital: {
     type: String,
-    required: true,
   },
 
   practice: {
     type: String,
-    required: True,
   },
 
   patients: [], // *{ _id }
