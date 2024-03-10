@@ -1,13 +1,12 @@
 const mongoose = require("mongoose");
 
 const Hospital = mongoose.Schema({
-    name: {
-        type: String,
-        required: true
-    },
+  name: {
+    type: String,
+    required: true,
+  },
 
-    doctors: []     // *{ _id }
+  doctors: [], // *{ _id }
 });
 
-module.exports = mongoose.model("hospital", Hospital)
-
+module.exports = mongoose.model("hospital", Hospital);

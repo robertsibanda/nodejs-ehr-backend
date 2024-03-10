@@ -10,6 +10,7 @@ const Token = require("../models/token");
 const login = async (req, res) => {
   const { username, password } = req.body;
 
+  console.log("from android : ", req.body);
   // request body has no credentials
   if (!username || !password)
     return res.json({ error: "username and password required" });
@@ -18,26 +19,21 @@ const login = async (req, res) => {
   await User.findOne({ username })
     .then(async (user) => {
       if (user === undefined || user === null)
-        return res
-          .status(httpStatusCodes.NOT_FOUND)
-          .json({ error: "user not found" });
+        return res.json({ error: "wrong username/password" });
 
       const validUser = await bcrypt.compare(password, user.password);
-      if (!validUser)
-        return res
-          .status(httpStatusCodes.NOT_ACCEPTABLE)
-          .json({ error: "wrong credentials" });
+      if (!validUser) return res.json({ error: "wrong username/password" });
 
       console.log("user  found");
       const { username, _id, userType, fullName } = user;
       req.user = { username, _id, userType, fullName };
 
       // generate tokens with user data
-      GenerateToken(req, res);
+      await GenerateToken(req, res);
     })
     .catch((error) => {
       console.log(error);
-      res.status(httpStatusCodes.BAD_REQUEST).json({ error: error });
+      res.json({ error: error });
     });
 };
 

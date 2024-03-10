@@ -4,6 +4,7 @@ require("dotenv").config();
 
 const database = require("./db/database");
 const authRoutes = require("./routes/authentication.js");
+const basicRoutes = require("./routes/basic.js");
 
 const app = express();
 app.use(express.json());
@@ -23,6 +24,7 @@ app.use(function (req, res, next) {
 });
 
 app.use("/ehr/v1/auth/", authRoutes);
+app.use("/ehr/v1/basic/", basicRoutes);
 
 app.set("port", process.env.PORT || 3000);
 
