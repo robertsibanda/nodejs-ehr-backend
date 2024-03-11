@@ -9,4 +9,4 @@ const Hospital = mongoose.Schema({
   doctors: [], // *{ _id }
 });
 
-module.exports = mongoose.model("hospital", Hospital);
+module.exports = mongoose.model("hospitals", Hospital);

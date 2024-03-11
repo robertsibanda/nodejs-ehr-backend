@@ -16,3 +16,5 @@ const Notes = mongoose.Schema({
     required: true,
   },
 });
+
+module.exports = mongoose.model("notes", Notes);

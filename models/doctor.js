@@ -22,4 +22,4 @@ const Doctor = mongoose.Schema({
   permissions: [], // *{ perm: val} e.g { add_patient: private, calender: public }
 });
 
-module.exports = mongoose.model("Doctor", Doctor);
+module.exports = mongoose.model("doctors", Doctor);

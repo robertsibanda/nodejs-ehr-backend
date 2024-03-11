@@ -1,10 +1,21 @@
 const mongoose = require("mongoose");
 
 const Illness = mongoose.Schema({
-  name: {
+  patient: {
     type: String,
     required: true,
   },
+
+  doctor: {
+    type: String,
+    required: true,
+  },
+
+  title: {
+    type: String,
+    required: true,
+  },
+
   date: {
     type: String,
     required: true,

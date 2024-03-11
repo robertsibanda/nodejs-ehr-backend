@@ -18,4 +18,4 @@ const Token = mongoose.Schema({
   },
 });
 
-module.exports = mongoose.model("token", Token);
+module.exports = mongoose.model("tokens", Token);

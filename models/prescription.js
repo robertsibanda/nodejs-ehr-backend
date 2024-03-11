@@ -1,6 +1,16 @@
 const mongoose = reuqire("mongoose");
 
 const Prescription = mongoose.Schema({
+  patient: {
+    type: String,
+    required: true,
+  },
+
+  doctor: {
+    type: String,
+    required: true,
+  },
+
   medicine: {
     type: String,
     required: true,
@@ -17,4 +27,4 @@ const Prescription = mongoose.Schema({
   },
 });
 
-module.exports = mongoose.model("prescription", Prescription);
+module.exports = mongoose.model("prescriptions", Prescription);
