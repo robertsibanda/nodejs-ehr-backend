@@ -47,6 +47,10 @@ const Update = async (req, res) => {
   }
 };
 
+const approve = async (req, res) => {
+  //approve doctor, event
+};
+
 module.exports = {
   Update,
 };
