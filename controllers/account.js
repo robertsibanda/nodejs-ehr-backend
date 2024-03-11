@@ -17,7 +17,7 @@ const ViewAuthInformation = async (req, res) => {};
 const Update = async (req, res) => {
   const { update, updateValue } = req.body;
 
-  if (update === "user_type") {
+  if (update === "userType") {
     await User.findOneAndUpdate(
       { username: req.user.username },
       { userType: updateValue }
@@ -47,4 +47,8 @@ const Update = async (req, res) => {
       res.json({ success: "account created" });
     });
   }
+};
+
+module.exports = {
+  Update,
 };

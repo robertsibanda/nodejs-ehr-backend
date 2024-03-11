@@ -5,7 +5,9 @@ const Patient = mongoose.Schema({
     type: String,
     required: true,
   },
-  profilePicture,
+  profilePicture: {
+    type: String,
+  },
 
   doctors: [], // *{ usernames }
   notes: [], // *{ text, date, doctor }

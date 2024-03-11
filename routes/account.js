@@ -1,8 +1,11 @@
 const express = require("express");
+
 const router = express.Router();
-const { SearchPerson } = require("../controllers/basic");
+
+const { Update } = require("../controllers/account");
+const { post } = require("./basic");
 const { auth } = require("../middleware/authentication");
 
-router.route("/search").post(auth, SearchPerson);
+router.route("/update").post(auth, Update);
 
 module.exports = router;

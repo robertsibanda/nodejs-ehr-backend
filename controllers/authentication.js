@@ -38,57 +38,45 @@ const login = async (req, res) => {
 };
 
 const signup = async (req, res) => {
-  const { username, password, email, fullName, phoneNumber } = req.body;
+  const { username, password, contact, fullName } = req.body;
 
   // create user if username and email not already taken
-  if (!username || !password || !email || !fullName || !phoneNumber)
-    return res
-      .status(httpStatusCodes.BAD_REQUEST)
-      .json({ error: "missing request data" });
+  if (!username || !password || !contact || !fullName)
+    return res.json({ error: "missing request data" });
 
-  await User.findOne({ email })
+  await User.findOne({ contact })
     .then(async (user) => {
       // email already registered
-      if (user)
-        return res
-          .status(httpStatusCodes.CONFLICT)
-          .json({ error: "Email already registered" });
+      if (user) return res.json({ error: "Email already registered" });
 
       await User.findOne({ username }).then(async (user) => {
+        // username already taken
         if (user)
-          // username already taken
-          return res
-            .status(httpStatusCodes.CONFLICT)
-            .json({ error: "Username already taken" });
-        await User.findOne({ phoneNumber }).then(async (user) => {
-          if (user)
-            // phone number already registered
-            return res
-              .status(httpStatusCodes.CONFLICT)
-              .json({ error: "Username already taken" });
+          // phone number already registered
+          return res.json({ error: "Username already taken" });
 
-          let hashedPassword = await bcrypt.hash(password, 10);
-          await User.create({
-            username,
-            fullName,
-            phoneNumber,
-            email,
-            password: hashedPassword,
-            userType: "unknown",
-          }).then((user) => {
-            if (user)
-              return res
-                .status(httpStatusCodes.ACCEPTED)
-                .json({ success: "user created" });
-          });
+        let hashedPassword = await bcrypt.hash(password, 10);
+        await User.create({
+          username,
+          fullName,
+          contact,
+          password: hashedPassword,
+          userType: "unknown",
+        }).then(async (user) => {
+          req.user = { username, userType: "unknown", fullName };
+          // generate tokens with user data
+          return await GenerateToken(req, res);
+
+          if (user)
+            return res
+              .status(httpStatusCodes.ACCEPTED)
+              .json({ success: "user created" });
         });
       });
     })
     .catch((error) => {
       console.log("Error" + error);
-      return res
-        .status(httpStatusCodes.BAD_REQUEST)
-        .json({ error: error.message });
+      return res.json({ error: error.message });
     });
 };
 
@@ -127,7 +115,8 @@ const GenerateToken = async (req, res, details) => {
           refreshToken: REFRESH_TOKEN,
         });
       }
-      return res.status(httpStatusCodes.OK).json({
+      return res.json({
+        success: "token generated",
         access: ACCESS_TOKEN,
         refresh: REFRESH_TOKEN,
         user: req.user.username,
@@ -137,7 +126,7 @@ const GenerateToken = async (req, res, details) => {
     })
     .catch((err) => {
       console.log(err);
-      return res.status(httpStatusCodes.NO_CONTENT).json({ error: err });
+      return resjson({ error: err });
     });
 };
 

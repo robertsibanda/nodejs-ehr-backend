@@ -5,7 +5,9 @@ const Doctor = mongoose.Schema({
     type: String,
     required: true,
   },
-  profilePicture,
+  profilePicture: {
+    type: String,
+  },
 
   hospital: {
     type: String,
