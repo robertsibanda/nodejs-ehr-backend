@@ -1,5 +1,4 @@
 const jwt = require("jsonwebtoken");
-const httpStatusCodes = require("http-status-codes");
 
 require("dotenv").config();
 
@@ -18,27 +17,20 @@ const auth = async (req, res, next) => {
     token,
     process.env.ACCESS_SECRET,
     async (err, data) => {
-      if (err)
-        return res
-          .status(httpStatusCodes.FORBIDDEN)
-          .json({ error: "Session expired" });
+      if (err) return res.json({ error: "Session expired" });
 
       const { username, _id, userType, fullName } = data;
 
       const tokenExists = await Token.findOne({ accessToken: token })
         .then((data) => {
           if (data === undefined || data == null)
-            return res
-              .status(httpStatusCodes.FORBIDDEN)
-              .json({ error: "session id blocked" });
+            return res.json({ error: "session id blocked" });
 
           req.user = { username, _id, userType, fullName };
           next();
         })
         .catch((err) => {
-          return res
-            .status(httpStatusCodes.NO_CONTENT)
-            .json({ error: err.message });
+          return res.json({ error: err.message });
         });
     }
   );

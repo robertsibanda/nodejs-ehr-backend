@@ -1,6 +1,5 @@
 const jwt = require("jsonwebtoken");
 const bcrypt = require("bcrypt");
-const httpStatusCodes = require("http-status-codes");
 
 require("dotenv").config();
 
@@ -67,10 +66,7 @@ const signup = async (req, res) => {
           // generate tokens with user data
           return await GenerateToken(req, res);
 
-          if (user)
-            return res
-              .status(httpStatusCodes.ACCEPTED)
-              .json({ success: "user created" });
+          if (user) return res.json({ success: "user created" });
         });
       });
     })

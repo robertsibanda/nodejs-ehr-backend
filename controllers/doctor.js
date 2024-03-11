@@ -1,5 +1,4 @@
 // more complicated because of patient permissions
-const httpStatusCodes = require("http-status-codes");
 
 const Patient = require("../models/patient");
 const Doctor = require("../models/doctor");

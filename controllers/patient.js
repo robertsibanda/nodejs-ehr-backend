@@ -1,4 +1,3 @@
-const httpStatusCode = require("http-status-codes");
 const Doctor = reuqire("../models/doctor");
 const Patient = require("../models/patient");
 const User = require("../models/user");
@@ -9,17 +8,15 @@ const AddDoctor = async (req, res) => {
   await Doctor.findOne({ _id: doctor_name })
     .then(async (doc) => {
       if (!doc) {
-        return res
-          .status(httpStatusCode.NOT_FOUND)
-          .json({ error: "doctor not found" });
+        return res.json({ error: "doctor not found" });
       }
 
       await Patient.findOne({ username: req.user.username }).then(
         async (patient) => {
           if (!patient) {
-            return res
-              .status(httpStatusCode.NOT_FOUND)
-              .json({ error: "you account is not registered under patients" });
+            return res.json({
+              error: "you account is not registered under patients",
+            });
           }
 
           if (patient.doctors.find(doc.username) === -1) {
@@ -46,9 +43,7 @@ const DeleteDoctor = async (req, res) => {
   await Patient.findOne({ username: req.user.username })
     .then(async (patient) => {
       if (!patient) {
-        return res
-          .status(httpStatusCode.NOT_FOUND)
-          .json({ error: "you account not registered as patient" });
+        return res.json({ error: "you account not registered as patient" });
       }
 
       await Patient.findOneAndUpdate(
@@ -103,10 +98,7 @@ const CreateAppointment = async (req, res) => {
 const DeleteAppointment = async (req, res) => {
   await Patient.findOne({ username: req.user.username })
     .then(async (patient) => {
-      if (!patient)
-        return res
-          .stats(httpStatusCode.NOT_FOUND)
-          .json({ error: "not registered as patient" });
+      if (!patient) return res.json({ error: "not registered as patient" });
     })
     .catch((err) => {
       return res.json({ error: err.message });
@@ -124,9 +116,7 @@ const ViewInformation = async (req, res) => {
   let patient = await Patient.findOne({ username: req.user.username });
 
   if (!patient) {
-    return res
-      .status(httpStatusCode.NOT_FOUND)
-      .json({ error: "you account not registered as patient" });
+    return res.json({ error: "you account not registered as patient" });
   }
   if (category === "calendar") {
     let calender_information = patient.calender.filter((cal) => {
@@ -141,9 +131,7 @@ const ViewInformation = async (req, res) => {
   } else if (category === "notes") {
     return res.json({ notes: patient.notes });
   } else {
-    return res
-      .status(httpStatusCode.NOT_FOUND)
-      .json({ error: "category not found" });
+    return res.json({ error: "category not found" });
   }
 };
 

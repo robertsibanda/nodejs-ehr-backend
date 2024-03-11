@@ -1,5 +1,3 @@
-const httpStatusCodes = require("http-status-codes");
-
 const User = require("../models/user");
 const Patient = require("../models/patient");
 const Doctor = require("../models/doctor");
