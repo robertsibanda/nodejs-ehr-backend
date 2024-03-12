@@ -1,7 +1,7 @@
 const mongoose = require("mongoose");
 
 const Token = mongoose.Schema({
-  user: {
+  username: {
     // username not userid(_id)
     type: String,
     required: true,

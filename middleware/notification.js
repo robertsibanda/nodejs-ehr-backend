@@ -3,21 +3,27 @@
 const Notification = require("../models/notification");
 const User = require("../models/user");
 
-const createNotification = async (req, res, next) => {
-  const { username, title, content } = req.notification;
+async function createNotification(req, res) {
+  const { type_, username, title, content } = req.notification;
   await Notification.create({
+    notificationType: type_,
     username,
     title,
     content,
     status: "0",
+    other: req.user.username,
   })
     .then(async (notif) => {
-      await User.findOne({ username: user }).then(async (user) => {
-        User.findOneAndUpdate(
-          { username },
-          { notifications: [...notifications, notif._id] }
-        );
-      });
+      await User.findOne({ username })
+        .then(async (user) => {
+          User.findOneAndUpdate(
+            { username },
+            { notifications: [...notifications, notif._id] }
+          );
+        })
+        .then((notif) => {
+          console.log("Notification created : ", req.notification);
+        });
     })
     .catch((err) => {
       console.log(
@@ -27,8 +33,6 @@ const createNotification = async (req, res, next) => {
         err.message
       );
     });
-};
+}
 
-module.expors = {
-  createNotification,
-};
+module.expors = createNotification;

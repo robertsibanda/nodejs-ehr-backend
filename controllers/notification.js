@@ -1,6 +1,13 @@
 const Notification = require("../models/notification");
 const User = require("../models/user");
 
+const get = async (req, res) => {
+  await Notification.find({ username: req.user.username, status : "0"})
+  .then(notif => {
+    res.json({ notifications: notif})
+  });
+};
+
 const read = async (req, res) => {
   const { notification } = req.body;
   await Notification.findOneAndUpdate({ _id: notification }, { status: "1" })
@@ -16,7 +23,7 @@ const read = async (req, res) => {
             }),
           }
         ).then((u) => {
-          res.json({ success: "fone updating notification" });
+          res.json({ success: "done updating notification" });
         });
       });
     })
@@ -27,4 +34,5 @@ const read = async (req, res) => {
 
 module.exports = {
   read,
+  get,
 };

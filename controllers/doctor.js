@@ -15,7 +15,7 @@ const AddPatient = async (req, res) => {
       patients = doc.patients;
       await Doctor.findOneAndUpdate(
         { username: req.user.username },
-        { patients: [...patients, patient] }
+        { patients: [...patients, { patient, approved: "0" }] }
       ).then((doc) => {
         return res.json({ sucess: "patiend added" });
       });
@@ -86,9 +86,65 @@ const CreateDiagnosis = async (req, res) => {
     });
 };
 
+const ViewInformation = async (req, res) => {
+  // for all viewing categories : calendar, alleges, notes, prescriptions, medications
+  const { category, person } = req.body;
+
+  let patient = await Patient.findOne({ username: person });
+
+  if (!patient) {
+    return res.json({ error: "you account not registered as patient" });
+  }
+  if (category === "calendar") {
+    let calender_information = patient.calender.filter((cal) => {
+      if (cal.date > new Date()) {
+        return cal;
+      }
+    });
+
+    return res.json({ success: calender_information });
+  } else if (category === "prescriptions") {
+    return res.json({ prescriptions: patient.prescriptions });
+  } else if (category === "notes") {
+    return res.json({ notes: patient.notes });
+  } else if (category === "doctors") {
+    return res.json({ doctors: patient.doctors });
+  } else if (category === "diagnosis") {
+    return res.json({ diagnoses: patient.illnesses });
+  }
+};
+
+async function createNotification(notification, req) {
+  const { type_, username, title, content } = notification;
+  await Notification.create({
+    notificationType: type_,
+    username,
+    title,
+    content,
+    status: "0",
+    other: req.user.username,
+  })
+    .then(async (notif) => {
+      await User.findOne({ username })
+        .then(async (user) => {
+          await User.findOneAndUpdate(
+            { username },
+            { notifications: [...user.notifications, notif._id] }
+          );
+        })
+        .then((notif) => {
+          console.log("Notification created : ", notification);
+        });
+    })
+    .catch((err) => {
+      console.log("Error in notifications:  ", notification, " : ", err);
+    });
+}
+
 module.exports = {
   CreatePrescription,
   DeletePatient,
   AddPatient,
   CreateDiagnosis,
+  ViewInformation,
 };

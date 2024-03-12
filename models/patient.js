@@ -5,6 +5,11 @@ const Patient = mongoose.Schema({
     type: String,
     required: true,
   },
+
+  fullName: {
+    type: String,
+  },
+
   profilePicture: {
     type: String,
   },

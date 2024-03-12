@@ -5,7 +5,8 @@ const Doctor = mongoose.Schema({
     type: String,
     required: true,
   },
-  profilePicture: {
+
+  fullName: {
     type: String,
   },
 
@@ -13,7 +14,11 @@ const Doctor = mongoose.Schema({
     type: String,
   },
 
-  practice: {
+  profession: {
+    type: String,
+  },
+
+  profilePicture: {
     type: String,
   },
 

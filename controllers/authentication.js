@@ -82,47 +82,52 @@ const RefreshToken = async (req, res) => {
 
 const GenerateToken = async (req, res, details) => {
   const ACCESS_TOKEN = jwt.sign(
-    { user: req.user.username, userType: req.user.userType, id: req.user._id },
+    {
+      username: req.user.username,
+      userType: req.user.userType,
+      id: req.user._id,
+    },
     process.env.ACCESS_SECRET,
     { expiresIn: "3d" }
   );
 
   const REFRESH_TOKEN = jwt.sign(
-    { user: req.user.username, userType: req.user.userType },
+    { username: req.user.username, userType: req.user.userType },
     process.env.REFRESH_SECRET,
     { expiresIn: "10d" }
   );
 
   console.log("RE: ", req.user.username);
 
-  await Token.findOne({ user: req.user.username })
+  await Token.findOne({ username: req.user.username })
     .then(async (tokenData) => {
       if (tokenData) {
         console.log("updating token");
         await Token.findOneAndUpdate(
-          { user: req.user.username },
+          { username: req.user.username },
           { accessToken: ACCESS_TOKEN, refreshToken: REFRESH_TOKEN }
         );
       } else {
         console.log("writing new token");
         await Token.create({
-          user: req.user.username,
+          username: req.user.username,
           accessToken: ACCESS_TOKEN,
           refreshToken: REFRESH_TOKEN,
         });
       }
+
       return res.json({
         success: "token generated",
         access: ACCESS_TOKEN,
         refresh: REFRESH_TOKEN,
-        user: req.user.username,
+        username: req.user.username,
         userType: req.user.userType,
         fullName: req.user.fullName,
       });
     })
     .catch((err) => {
       console.log(err);
-      return resjson({ error: err });
+      return res.json({ error: err });
     });
 };
 

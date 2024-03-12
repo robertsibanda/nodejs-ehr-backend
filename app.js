@@ -6,6 +6,8 @@ const database = require("./db/database");
 const authRoutes = require("./routes/authentication.js");
 const basicRoutes = require("./routes/basic.js");
 const accountRoutes = require("./routes/account.js");
+const patientRoutes = require("./routes/patient.js");
+const notificationRoutes = require("./routes/notification.js");
 
 const app = express();
 app.use(express.json());
@@ -27,6 +29,8 @@ app.use(function (req, res, next) {
 app.use("/ehr/v1/auth/", authRoutes);
 app.use("/ehr/v1/basic/", basicRoutes);
 app.use("/ehr/v1/account/", accountRoutes);
+app.use("/ehr/v1/patient/", patientRoutes);
+app.use("/ehr/v1/notification/", notificationRoutes);
 
 app.set("port", process.env.PORT || 3000);
 

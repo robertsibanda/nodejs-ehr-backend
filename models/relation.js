@@ -1,34 +1,33 @@
 const mongoose = require("mongoose");
 
-const Notification = mongoose.Schema({
+const Relation = mongoose.Schema({
   username: {
     type: String,
     required: true,
   },
 
-  notificationType: {
+  doctor: {
     type: String,
     required: true,
   },
 
-  title: {
+  patient: {
     type: String,
     required: true,
   },
 
-  content: {
+  approved: {
     type: String,
     required: true,
   },
 
-  status: {
+  rejected: {
     type: String,
     required: true,
   },
 
-  other: {
+  approver: {
     type: String,
+    required: true,
   },
 });
-
-module.exports = mongoose.model("notifications", Notification);

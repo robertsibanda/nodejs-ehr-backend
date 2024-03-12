@@ -4,20 +4,101 @@ const Doctor = require("../models/doctor");
 const User = require("../models/user");
 
 const SearchPerson = async (req, res) => {
+  console.log("Searchinf for : ", req.body);
   const { search_string, user_type } = req.body;
-  await User.find({ userType: user_type }).then(async (people) => {
-    foundPeople = people.filter((person) => {
-      if (person.fullName.toLowerCase().includes(search_string.toLowerCase())) {
-        return person;
-      }
-    });
 
-    if (foundPeople.length > 0) {
-      res.json({ people: foundPeople });
-    } else {
-      res.json({ error: "404" });
-    }
-  });
+  let foundPeople = [];
+
+  let myRelations = [];
+
+  if (user_type === "doctor") {
+    // search for doctors
+    await Doctor.find({}).then(async (docs) => {
+      await Patient.findOne({ username: req.user.username }).then((patient) => {
+        myRelations = patient.doctors;
+        foundPeople = docs.filter((doc) => {
+          if (
+            doc.fullName.toLowerCase().includes(search_string.toLowerCase())
+          ) {
+            return doc;
+          }
+        });
+      });
+    });
+  } else if (user_type === "patient") {
+    //search for patients
+    await Patient.find({}).then(async (patients) => {
+      await Doctor.findOne({ username: req.user.username }).then((doc) => {
+        myRelations = doc.patients;
+        foundPeople = patients.filter((pat) => {
+          if (
+            pat.fullName.toLowerCase().includes(search_string.toLowerCase())
+          ) {
+            return pat;
+          }
+        });
+      });
+    });
+  }
+
+  console.log("Found people : ", foundPeople);
+  if (foundPeople.length > 0 && user_type === "doctor") {
+    // doctors found
+    console.log("My Relations : ", myRelations);
+
+    let people = foundPeople.map(person => {
+
+      let approved = myRelations.map(rel => {
+        console.log("Selected Approv: ", rel , `username ${person.username} vs ${rel.doctor}`)
+
+        if (rel.doctor === person.username & rel.approved === "1") {
+          return true
+        }
+        console.log("Rejected Approv: ", rel)
+
+      })
+      console.log("Approved : ", approved)
+      let requested = myRelations.map(rel => {
+        if (rel.doctor === person.username & rel.approved === "0") {
+          console.log("Selected Req: ", rel)
+          return true
+        }
+        console.log("Rejected Approv: ", rel)
+
+      })
+      console.log("requested : ", requested)
+
+      return {
+        name: person.fullName,
+        username: person.username,
+        contact: person.contact,
+        hospital: person.hospital,
+        work: person.profession,
+        approved: approved.includes(true),
+        requested: requested.includes(true)
+      };
+    })
+
+    res.json({people});
+  } else if (foundPeople.length > 0 && user_type === "patient") {
+    //patients found
+    res.json({
+      people: foundPeople.map((person) => {
+        return {
+          name: person.fullName,
+          username: person.username,
+          contact: person.contact,
+          status: person.doctors.filter((doc) => {
+            if (req.user.username === doc) {
+              return true;
+            }
+          }),
+        };
+      }),
+    });
+  } else {
+    res.json({ error: "404" });
+  }
 };
 
 const CreateAppointment = async (req, res) => {
@@ -89,6 +170,12 @@ const UpdateAppointment = async (req, res) => {
       res.json({ sucess: "appointment updated" });
     }
   );
+};
+
+const UpdateRelationShip = async (req, res) => {
+  const { relationship, approved, rejected } = req.body;
+  if (!appointment || !approved || !rejected)
+    return res.json({ error: "missing reqest data" });
 };
 
 const DeleteAppointment = async (req, res) => {

@@ -13,6 +13,7 @@ const ChangeAuthInformation = async (req, res) => {
 const ViewAuthInformation = async (req, res) => {};
 
 const Update = async (req, res) => {
+  console.log("Updating account : ", req.body, " from req.user ", req.user);
   const { update, updateValue } = req.body;
 
   if (update === "userType") {
@@ -21,21 +22,32 @@ const Update = async (req, res) => {
       { userType: updateValue }
     ).then(async (user) => {
       if (updateValue === "doctor") {
-        await Doctor.create({ username: req.user.username }).then((doc) => {
-          res.json({ success: "account created" });
+        await Doctor.create({
+          username: req.user.username,
+          fullName: user.fullName,
+        }).then((doc) => {
+          res.json({ success: "account updated" });
         });
       } else if (updateValue === "patient") {
         const { permissions } = req.body;
         await Patient.create({
-          username: req.user.usernae,
+          username: req.user.username,
+          fullName: user.fullName,
           permissions: permissions,
         }).then((pat) => {
-          res.json({ success: "account created" });
+          res.json({ success: "account updated" });
         });
       }
     });
-  } else if (update === "profile_pic") {
-    //  replace old image with new one
+  } else if (update === "doctor-proff") {
+    //  update doctor profile
+    const { profession, hospital } = req.body;
+    await Doctor.findOneAndUpdate(
+      { username: req.user.username },
+      { profession, hospital }
+    ).then((doc) => {
+      res.json({ success: "account updated" });
+    });
   } else if ((update = "proff")) {
     const { hospital, practice } = req.body;
     await Doctor.findOneAndUpdate(
