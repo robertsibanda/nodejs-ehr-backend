@@ -2,102 +2,97 @@ const Event = require("../models/event");
 const Patient = require("../models/patient");
 const Doctor = require("../models/doctor");
 const User = require("../models/user");
+const Relation = require("../models/relation");
 
 const SearchPerson = async (req, res) => {
   console.log("Searchinf for : ", req.body);
   const { search_string, user_type } = req.body;
 
-  let foundPeople = [];
-
-  let myRelations = [];
-
+  //TODO fix double request problem
   if (user_type === "doctor") {
-    // search for doctors
-    await Doctor.find({}).then(async (docs) => {
-      await Patient.findOne({ username: req.user.username }).then((patient) => {
-        myRelations = patient.doctors;
-        foundPeople = docs.filter((doc) => {
-          if (
-            doc.fullName.toLowerCase().includes(search_string.toLowerCase())
-          ) {
-            return doc;
-          }
-        });
-      });
+    let doctors = await Doctor.find({});
+    let patient = await Patient.findOne({ username: req.user.username });
+
+    foundPeople = doctors.filter((p) => {
+      if (p.fullName.toLowerCase().includes(search_string)) {
+        return p;
+      }
     });
-  } else if (user_type === "patient") {
-    //search for patients
-    await Patient.find({}).then(async (patients) => {
-      await Doctor.findOne({ username: req.user.username }).then((doc) => {
-        myRelations = doc.patients;
-        foundPeople = patients.filter((pat) => {
-          if (
-            pat.fullName.toLowerCase().includes(search_string.toLowerCase())
-          ) {
-            return pat;
-          }
-        });
-      });
-    });
-  }
 
-  console.log("Found people : ", foundPeople);
-  if (foundPeople.length > 0 && user_type === "doctor") {
-    // doctors found
-    console.log("My Relations : ", myRelations);
+    people = foundPeople.map((doc) => {
+      doc_request = patient.requested.includes(doc.username);
+      pat_requested = doc.requested.includes(patient.username);
 
-    let people = foundPeople.map(person => {
+      let requested = false;
+      let approver = null;
+      if (doc_request || pat_requested) {
+        requested = true;
+      }
 
-      let approved = myRelations.map(rel => {
-        console.log("Selected Approv: ", rel , `username ${person.username} vs ${rel.doctor}`)
-
-        if (rel.doctor === person.username & rel.approved === "1") {
-          return true
-        }
-        console.log("Rejected Approv: ", rel)
-
-      })
-      console.log("Approved : ", approved)
-      let requested = myRelations.map(rel => {
-        if (rel.doctor === person.username & rel.approved === "0") {
-          console.log("Selected Req: ", rel)
-          return true
-        }
-        console.log("Rejected Approv: ", rel)
-
-      })
-      console.log("requested : ", requested)
+      if (doc_request) approver = patient.username;
+      if (pat_requested) approver = doc.username;
 
       return {
-        name: person.fullName,
-        username: person.username,
-        contact: person.contact,
-        hospital: person.hospital,
-        work: person.profession,
-        approved: approved.includes(true),
-        requested: requested.includes(true)
+        name: doc.fullName,
+        username: doc.username,
+        contact: doc.contact,
+        hospital: doc.hospital,
+        work: doc.profession,
+        approver,
+        approved: doc.patients.includes(req.user.username),
+        requested,
       };
-    })
-
-    res.json({people});
-  } else if (foundPeople.length > 0 && user_type === "patient") {
-    //patients found
-    res.json({
-      people: foundPeople.map((person) => {
-        return {
-          name: person.fullName,
-          username: person.username,
-          contact: person.contact,
-          status: person.doctors.filter((doc) => {
-            if (req.user.username === doc) {
-              return true;
-            }
-          }),
-        };
-      }),
     });
-  } else {
-    res.json({ error: "404" });
+
+    res.json({ people });
+    console.log(people);
+
+  } else if (user_type === "patient") {
+
+    let patients = await Patient.find({});
+    let doctor = await Doctor.findOne({ username: req.user.username });
+
+    foundPeople = patients.filter((p) => {
+      if (p.fullName.toLowerCase().includes(search_string)) {
+        return p;
+      }
+    });
+
+
+    people = foundPeople.map((pat) => {
+
+      pat_request = doctor.requested.includes(pat.username);
+      doc_request = pat.requested.includes(doctor.username);
+
+      let requested = false;
+      let approver = null;
+      if (doc_request || pat_request) {
+        requested = true;
+      }
+
+      if (doc_request) 
+        {
+          approver = pat.username;
+          console.log("approver 1 : ", approver)
+        }
+      if (pat_request) 
+      {
+        approver = doctor.username;
+        console.log("approver 2 : ", approver)
+      }
+
+      return {
+        name: pat.fullName,
+        username: pat.username,
+        contact: pat.contact,
+        approved: pat.doctors.includes(req.user.username),
+        requested,
+        approver
+      };
+    });
+
+    res.json({ people });
+    console.log(people);
   }
 };
 

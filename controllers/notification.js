@@ -2,15 +2,19 @@ const Notification = require("../models/notification");
 const User = require("../models/user");
 
 const get = async (req, res) => {
-  await Notification.find({ username: req.user.username, status : "0"})
-  .then(notif => {
-    res.json({ notifications: notif})
-  });
+  await Notification.find({ username: req.user.username, status: "0" }).then(
+    (notif) => {
+      res.json({ notifications: notif });
+    }
+  );
 };
 
 const read = async (req, res) => {
   const { notification } = req.body;
-  await Notification.findOneAndUpdate({ _id: notification }, { status: "1" })
+  await Notification.findOneAndUpdate(
+    { _id: notification, status: "0" },
+    { status: "1" }
+  )
     .then(async (notif) => {
       await User.findOne({ username: req.user.username }).then(async (user) => {
         await User.findOneAndUpdate(

@@ -3,6 +3,7 @@ const Patient = require("../models/patient");
 const User = require("../models/user");
 const Notification = require("../models/notification");
 const Event = require("../models/event");
+const Relation = require("../models/relation");
 
 const AddDoctor = async (req, res, next) => {
   // add new doctor to doc_list
@@ -22,42 +23,17 @@ const AddDoctor = async (req, res, next) => {
             });
           }
 
-          if (
-            (patient.doctors.includes({
-              username: doc.username,
-              approved: "0",
-            }) ===
-              false) &
-            (patient.doctors.includes({
-              username: doc.username,
-              approved: "1",
-            }) ===
-              false)
-          ) {
-            await Patient.findOneAndUpdate(
-              { username: req.user.username },
-              {
-                doctors: [
-                  ...patient.doctors,
-                  { doctor: doc.username, approved: "0" },
-                ],
-              }
-            ).then(async (p) => {
-              await Doctor.findOneAndUpdate(
-                { username: doc.username },
-                {
-                  patients: [
-                    ...doc.patients,
-                    { patient: req.user.username, approved: "0" },
-                  ],
-                }
-              );
+          if (patient.doctors.includes(doctor) === false) {
+            await Doctor.findOneAndUpdate(
+              { username: doc.username },
+              { requested: [...doc.requested, req.user.username] }
+            ).then(async (relation) => {
               res.json({ success: "doctor added" });
               const notificationContent = `User  ${req.user.username} is requesting to be your patient`;
               notification = {
                 type_: "relation",
                 content: notificationContent,
-                username: doc.username,
+                username: doctor,
                 title: "New Patient",
                 other: req.user.username,
               };
@@ -192,6 +168,7 @@ const ViewInformation = async (req, res) => {
 const approve = async (req, res) => {
   //approve appintment and relations
   const { category } = req.body;
+  let patient = await Patient.findOne({ username: req.user.username });
   if (category === "appointment") {
     const { id } = req.body;
 
@@ -229,11 +206,39 @@ const approve = async (req, res) => {
     }
   } else if (category === "relation") {
     //TODO finish this
+    const { doctor } = req.body;
+    if (patient.requested.includes(doctor)) {
+      await Patient.findOneAndUpdate(
+        { username: patient.username },
+        {
+          requested: patient.requested.filter((doc) => {
+            if (doc !== doctor) {
+              return doc;
+            }
+          }),
+          doctors: [patient.doctors, doctor],
+        }
+      );
+
+      res.json({ success: "relation approved" });
+
+      const notificationContent = `User  ${req.user.username} has 
+                approved an relation with you`;
+
+      let notification = {
+        other: "none",
+        type_: "relation approved",
+        content: notificationContent,
+        username: doctor,
+        title: "Relation",
+      };
+      createNotification(notification, req);
+    }
   }
 };
 
 async function createNotification(notification, req) {
-  const { type_, username, title, content } = notification;
+  const { type_, username, title, content, other } = notification;
   await Notification.create({
     notificationType: type_,
     username,
@@ -265,4 +270,5 @@ module.exports = {
   DeleteAppointment,
   EditAppointment,
   ViewInformation,
+  approve,
 };

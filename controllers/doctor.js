@@ -6,23 +6,30 @@ const Note = require("../models/notes");
 const Prescritpion = require("../models/prescription");
 const Disease = require("../models/illness");
 const illness = require("../models/illness");
+const Notification = require("../models/notification");
+const User = require("../models/user");
 
 const AddPatient = async (req, res) => {
   // TODO create notification
   const { patient } = req.body;
-  await Doctor.findOne({ username: req.user.username })
-    .then(async (doc) => {
-      patients = doc.patients;
-      await Doctor.findOneAndUpdate(
-        { username: req.user.username },
-        { patients: [...patients, { patient, approved: "0" }] }
-      ).then((doc) => {
-        return res.json({ sucess: "patiend added" });
-      });
-    })
-    .catch((err) => {
-      return res.json({ error: err.message });
-    });
+  let patient_ = await Patient.findOne({ username: patient });
+
+  await Patient.findOneAndUpdate(
+    { username: patient },
+    { requested: [...patient_.requested, req.user.username] }
+  ).then((pat) => {
+    res.json({ success: "request submitted" });
+    const notificationContent = `User  ${req.user.username} has requqetsed to be your doctor`;
+
+    let notification = {
+      other: pat._id,
+      type_: "relation",
+      content: notificationContent,
+      username: pat.username,
+      title: "Relation Request",
+    };
+    createNotification(notification, req);
+  });
 };
 
 const DeletePatient = async (req, res) => {
@@ -114,6 +121,119 @@ const ViewInformation = async (req, res) => {
   }
 };
 
+const approve = async (req, res) => {
+  //approve appintment and relations
+  const { category } = req.body;
+  console.log("Aprroving : ", req.body);
+  if (category === "appointment") {
+    const { id } = req.body;
+
+    let event = await Event.findOne({ _id: id });
+    let doctor = await Doctor.findOne({ username: event.doctor });
+    let patient = await Patient.findOne({ username: event.patient });
+
+    if (event.approver === req.user.username) {
+      await Event.findOneAndUpdate(
+        { _id: id },
+        { approved: true, rejected: false }
+      ).then(async (event) => {
+        await Doctor.findOneAndUpdate(
+          { username: doctor.username },
+          { calender: [...calender, id] }
+        ).then(async (doc) => {
+          await Patient.findOneAndUpdate(
+            { username: patient.username },
+            { calender: [...calender, id] }
+          ).then(async (pat) => {
+            res.json({ success: "appointment approved" });
+            const notificationContent = `User  ${req.user.username} has approved an appintment with you on ${date} at ${time}`;
+
+            let notification = {
+              other: event._id,
+              type_: "appintment approval",
+              content: notificationContent,
+              username: doctor.username,
+              title: "Appointment",
+            };
+            createNotification(notification, req);
+          });
+        });
+      });
+    }
+  } else if (category === "relation") {
+    const { notification, other, approval } = req.body;
+    let patient = await Patient.findOne({ username: other });
+    let doctor = await Doctor.findOne({ username: req.user.username });
+    await Notification.findOneAndUpdate(
+      { _id: notification },
+      { status: "1" }
+    ).then(async (notif) => {
+      if (approval === "1") {
+        await Doctor.findOneAndUpdate(
+          { username: req.user.username },
+          {
+            patients: [...doctor.patients, other],
+            requested: doctor.requested.filter((r) => {
+              if (r !== other) {
+                return req;
+              }
+            }),
+          }
+        ).then(async (doc) => {
+          await Patient.findOneAndUpdate(
+            { username: other },
+            {
+              doctors: [...patient.doctors, doc.username],
+              requested: patient.requested.filter((r) => {
+                if (r !== doctor.username) {
+                  return r;
+                }
+              }),
+            }
+          ).then((pat) => {
+            res.json({ success: "relation approved" });
+
+            const notificationContent = `User  ${req.user.username} has 
+                approved an relation with you`;
+
+            let notification = {
+              other: "none",
+              type_: "relation approved",
+              content: notificationContent,
+              username: other,
+              title: "Relation",
+            };
+            createNotification(notification, req);
+          });
+        });
+      } else {
+        await Doctor.findOneAndUpdate(
+          { doctor: req.user.username },
+          {
+            requested: doctor.requested.filter((req) => {
+              if (req !== other) {
+                return req;
+              }
+            }),
+          }
+        ).then(async (rel) => {
+          res.json({ success: "rejected" });
+          const notificationContent = `User  ${req.user.username} has rejected an relation with you`;
+
+          let notification = {
+            other: "none",
+            type_: "relation rejected",
+            content: notificationContent,
+            username: other,
+            title: "Relation",
+          };
+          createNotification(notification, req);
+        });
+      }
+    });
+  }
+};
+
 async function createNotification(notification, req) {
   const { type_, username, title, content } = notification;
   await Notification.create({
@@ -147,4 +267,5 @@ module.exports = {
   AddPatient,
   CreateDiagnosis,
   ViewInformation,
+  approve,
 };

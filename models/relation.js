@@ -17,12 +17,12 @@ const Relation = mongoose.Schema({
   },
 
   approved: {
-    type: String,
+    type: Boolean,
     required: true,
   },
 
   rejected: {
-    type: String,
+    type: Boolean,
     required: true,
   },
 
@@ -31,3 +31,5 @@ const Relation = mongoose.Schema({
     required: true,
   },
 });
+
+module.exports = mongoose.model("relations", Relation);

@@ -8,6 +8,7 @@ const basicRoutes = require("./routes/basic.js");
 const accountRoutes = require("./routes/account.js");
 const patientRoutes = require("./routes/patient.js");
 const notificationRoutes = require("./routes/notification.js");
+const doctorRoutes = require("./routes/doctor");
 
 const app = express();
 app.use(express.json());
@@ -31,6 +32,7 @@ app.use("/ehr/v1/basic/", basicRoutes);
 app.use("/ehr/v1/account/", accountRoutes);
 app.use("/ehr/v1/patient/", patientRoutes);
 app.use("/ehr/v1/notification/", notificationRoutes);
+app.use("/ehr/v1/doctor/", doctorRoutes);
 
 app.set("port", process.env.PORT || 3000);
 

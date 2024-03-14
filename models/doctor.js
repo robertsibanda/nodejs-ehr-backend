@@ -10,6 +10,10 @@ const Doctor = mongoose.Schema({
     type: String,
   },
 
+  contact: {
+    type: String,
+  },
+
   hospital: {
     type: String,
   },
@@ -23,6 +27,7 @@ const Doctor = mongoose.Schema({
   },
 
   patients: [], // *{ _id }
+  requested: [],
   calender: [], // *{ title, text, date, time, status(done/not)}
   permissions: [], // *{ perm: val} e.g { add_patient: private, calender: public }
 });
