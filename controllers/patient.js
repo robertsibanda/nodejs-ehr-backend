@@ -4,6 +4,8 @@ const User = require("../models/user");
 const Notification = require("../models/notification");
 const Event = require("../models/event");
 const Relation = require("../models/relation");
+const Illness = require("../models/illness");
+const Prescritpion = require("../models/prescription");
 
 const AddDoctor = async (req, res, next) => {
   // add new doctor to doc_list
@@ -154,14 +156,58 @@ const ViewInformation = async (req, res) => {
     });
 
     return res.json({ success: calender_information });
-  } else if (category === "prescriptions") {
-    return res.json({ prescriptions: patient.prescriptions });
+  } else if (category == "results") {
+    return res.json({ results: patient.results });
+  } else if (category === "medicine") {
+    await Prescritpion.find({ patient: req.user.username }).then((presc) => {
+      if (presc == null) return json({ error: "prescriptions not found" });
+      res.json({ medicine: presc });
+    });
   } else if (category === "notes") {
     return res.json({ notes: patient.notes });
   } else if (category === "doctors") {
-    return res.json({ doctors: patient.doctors });
+    let docs = [];
+
+    for (let index = 0; index < patient.doctors.length; index++) {
+      const element = patient.doctors[index];
+      doc_infor = await Doctor.findOne({ username: element }).then((infor) => {
+        docs = [...docs, infor];
+      });
+    }
+
+    people = docs.map((doc) => {
+      return {
+        name: doc.fullName,
+        username: doc.username,
+        contact: doc.contact,
+        hospital: doc.hospital,
+        work: doc.profession,
+      };
+    });
+
+    console.log("People : ", people);
+    return res.json({ doctors: people });
   } else if (category === "diagnosis") {
-    return res.json({ diagnoses: patient.illnesses });
+    let illness = [];
+
+    for (let index = 0; index < patient.illnesses.length; index++) {
+      const element = patient.doctors[index];
+      await Illness.findOne({ _id: element }).then((infor) => {
+        illness = [...illness, infor];
+      });
+    }
+
+    diseases = illness.map((ill) => {
+      return {
+        name: ill.title,
+        doctor: ill.doctor,
+        date: ill.date,
+        other: ill.other,
+      };
+    });
+    return res.json({ diagnoses: diseases });
+  } else if (category == "alleges") {
+    return res.json({ alleges: patient.alleges });
   }
 };
 

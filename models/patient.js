@@ -11,7 +11,7 @@ const Patient = mongoose.Schema({
   },
 
   contact: {
-    type: String
+    type: String,
   },
 
   profilePicture: {
@@ -20,6 +20,7 @@ const Patient = mongoose.Schema({
 
   requested: [],
 
+  results: [],
   doctors: [], // *{ usernames }
   notes: [], // *{ text, date, doctor }
   calender: [], // *{ title, date, time, status(done/not)}

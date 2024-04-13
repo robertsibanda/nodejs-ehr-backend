@@ -8,6 +8,7 @@ const Disease = require("../models/illness");
 const illness = require("../models/illness");
 const Notification = require("../models/notification");
 const User = require("../models/user");
+const patient = require("../models/patient");
 
 const AddPatient = async (req, res) => {
   // TODO create notification
@@ -19,7 +20,7 @@ const AddPatient = async (req, res) => {
     { requested: [...patient_.requested, req.user.username] }
   ).then((pat) => {
     res.json({ success: "request submitted" });
-    const notificationContent = `User  ${req.user.username} has requqetsed to be your doctor`;
+    const notificationContent = `User  ${req.user.username} has requetsed to be your doctor`;
 
     let notification = {
       other: pat._id,
@@ -58,12 +59,13 @@ const DeletePatient = async (req, res) => {
 
 const CreatePrescription = async (req, res) => {
   // TODO create notification
-  const { medicine, reason, patient } = req.body;
+  const { medicine, note, person, qty } = req.body;
   await Prescritpion.create({
-    patient,
+    patient: person,
     medicine,
-    //new Date()
-    reason,
+    date: new Date().toDateString(),
+    note,
+    qty,
     doctor: req.user.username,
   })
     .then((pres) => {
@@ -75,22 +77,77 @@ const CreatePrescription = async (req, res) => {
     });
 };
 
+const CreateNote = async (req, res) => {
+  const { content, person } = req.body;
+
+  console.log("Notes body : ", req.body);
+
+  const patient = await Patient.findOne({ username: person });
+
+  if (!patient || patient == null)
+    return res.json({ Error: "patient not found" });
+
+  const note = {
+    doctor: req.user.username,
+    content,
+    date: new Date().toLocaleDateString(),
+  };
+  await Patient.findOneAndUpdate(
+    { username: person },
+    { notes: [...patient.notes, note] }
+  )
+    .then((p) => {
+      console.log("Note added : ", p);
+      res.json({ success: "note added" });
+    })
+    .catch((err) => {
+      console.log("Error (adding notes): " + err.messae);
+      res.json({ error: err.message });
+    });
+};
+
 const CreateDiagnosis = async (req, res) => {
   // TODO create notification
-  const { patient, title, other, doctor } = req.body;
-  if (!patient || !title || !doctor || !other)
+  const { person, title, note } = req.body;
+  if (!person || !title || !note)
     return res.json({ error: "miising request data" });
+
   await illness
     .create({
-      patient,
+      patient: person,
       doctor: req.user.username,
-      title,
+      note,
       //new Date()
       other,
     })
     .then((ill) => {
       res.json({ success: "Illness created" });
+    })
+    .catch((err) => {
+      res.json({ error: err.message });
     });
+};
+
+const CreateAllege = async (req, res) => {
+  const { person, allege, note } = req.body;
+  if (!person || !allegy || !note)
+    return res.json({ error: "missing information" });
+
+  await Patient.findOne({ username: person }).then(async (patient) => {
+    await Patient.findOneAndUpdate(
+      { username: patient.username },
+      {
+        alleges: [
+          ...patient.alleges,
+          {
+            allege,
+            note,
+            date: new Date().toDateString(),
+          },
+        ],
+      }
+    );
+  });
 };
 
 const ViewInformation = async (req, res) => {
@@ -99,9 +156,14 @@ const ViewInformation = async (req, res) => {
 
   let patient = await Patient.findOne({ username: person });
 
-  if (!patient) {
-    return res.json({ error: "you account not registered as patient" });
+  let doctor = await Doctor.findOne({ username: req.user.username });
+
+  console.log("looking at : ", { category, person });
+
+  if (!doctor) {
+    return res.json({ error: "you account not registered as a doctor" });
   }
+
   if (category === "calendar") {
     let calender_information = patient.calender.filter((cal) => {
       if (cal.date > new Date()) {
@@ -110,14 +172,56 @@ const ViewInformation = async (req, res) => {
     });
 
     return res.json({ success: calender_information });
-  } else if (category === "prescriptions") {
-    return res.json({ prescriptions: patient.prescriptions });
+  } else if (category === "medicine") {
+    await Prescritpion.find({ patient: person }).then((presc) => {
+      if (presc == null) return json({ error: "prescriptions not found" });
+      res.json({ medicine: presc });
+    });
   } else if (category === "notes") {
     return res.json({ notes: patient.notes });
+  } else if (category == "results") {
+    return res.json({ results: patient.results });
   } else if (category === "doctors") {
-    return res.json({ doctors: patient.doctors });
+    let docs = [];
+
+    for (let index = 0; index < patient.doctors.length; index++) {
+      const element = patient.doctors[index];
+      await Doctor.findOne({ username: element }).then((infor) => {
+        docs = [...docs, infor];
+      });
+    }
+
+    people = docs.map((doc) => {
+      console.log("Doc doc : ", doc);
+      doc_request = patient.requested.includes(doc.username);
+      pat_requested = doctor.requested.includes(patient.username);
+
+      let requested = false;
+      let approver = null;
+      if (doc_request || pat_requested) {
+        requested = true;
+      }
+
+      if (doc_request) approver = patient.username;
+      if (pat_requested) approver = doc.username;
+
+      return {
+        name: doc.fullName,
+        username: doc.username,
+        contact: doc.contact,
+        hospital: doc.hospital,
+        work: doc.profession,
+        approver,
+        approved: doc.patients.includes(req.user.username),
+        requested,
+      };
+    });
+
+    res.json({ doctors: people });
   } else if (category === "diagnosis") {
     return res.json({ diagnoses: patient.illnesses });
+  } else if (category == "allege") {
+    return res.json({ alleges: patient.alleges });
   }
 };
 
@@ -234,6 +338,34 @@ const approve = async (req, res) => {
   }
 };
 
+const CreateResult = async (req, res) => {
+  const { person, test, test_code, result, result_code } = req.body;
+  await Patient.findOne({ username: person })
+    .then(async (pat) => {
+      if (patient == null) return res.json({ error: "patient not found" });
+      await Patient.findOneAndUpdate(
+        { username: pat.username },
+        {
+          results: [
+            ...pat.results,
+            {
+              test,
+              test_code,
+              result,
+              result_code,
+              date: new Date().toDateString(),
+            },
+          ],
+        }
+      ).then((pat_) => {
+        res.json({ success: "result added succeffully" });
+      });
+    })
+    .catch((err) => {
+      res.json({ error: err.message });
+    });
+};
+
 async function createNotification(notification, req) {
   const { type_, username, title, content } = notification;
   await Notification.create({
@@ -266,6 +398,9 @@ module.exports = {
   DeletePatient,
   AddPatient,
   CreateDiagnosis,
+  CreateAllege,
+  CreateResult,
   ViewInformation,
+  CreateNote,
   approve,
 };

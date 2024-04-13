@@ -21,9 +21,13 @@ const Prescription = mongoose.Schema({
     reuqired: true,
   },
 
-  reason: {
+  qty : {
     type: String,
-    required: true,
+    required: true
+  },
+
+  note: {
+    type: String,
   },
 });
 

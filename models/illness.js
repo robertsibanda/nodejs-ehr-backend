@@ -21,7 +21,7 @@ const Illness = mongoose.Schema({
     required: true,
   },
 
-  other: {
+  note: {
     type: String,
   },
 });

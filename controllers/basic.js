@@ -4,6 +4,23 @@ const Doctor = require("../models/doctor");
 const User = require("../models/user");
 const Relation = require("../models/relation");
 
+const ViewProfileInformation = async (req, res) => {
+  //get user iformation for profile viewing
+  const { username } = req.body;
+
+  const userInfor = User.findOne({ username })
+    .then((user) => {
+      person = {
+        fullname: user.fullName,
+        contact: user.contact,
+      };
+      return res.json({ person });
+    })
+    .catch((err) => {
+      return res.json({ error: err.message });
+    });
+};
+
 const SearchPerson = async (req, res) => {
   console.log("Searchinf for : ", req.body);
   const { search_string, user_type } = req.body;
@@ -46,9 +63,7 @@ const SearchPerson = async (req, res) => {
 
     res.json({ people });
     console.log(people);
-
   } else if (user_type === "patient") {
-
     let patients = await Patient.find({});
     let doctor = await Doctor.findOne({ username: req.user.username });
 
@@ -58,9 +73,7 @@ const SearchPerson = async (req, res) => {
       }
     });
 
-
     people = foundPeople.map((pat) => {
-
       pat_request = doctor.requested.includes(pat.username);
       doc_request = pat.requested.includes(doctor.username);
 
@@ -70,15 +83,13 @@ const SearchPerson = async (req, res) => {
         requested = true;
       }
 
-      if (doc_request) 
-        {
-          approver = pat.username;
-          console.log("approver 1 : ", approver)
-        }
-      if (pat_request) 
-      {
+      if (doc_request) {
+        approver = pat.username;
+        console.log("approver 1 : ", approver);
+      }
+      if (pat_request) {
         approver = doctor.username;
-        console.log("approver 2 : ", approver)
+        console.log("approver 2 : ", approver);
       }
 
       return {
@@ -87,7 +98,7 @@ const SearchPerson = async (req, res) => {
         contact: pat.contact,
         approved: pat.doctors.includes(req.user.username),
         requested,
-        approver
+        approver,
       };
     });
 
@@ -182,4 +193,5 @@ module.exports = {
   CreateAppointment,
   UpdateAppointment,
   DeleteAppointment,
+  ViewProfileInformation,
 };
