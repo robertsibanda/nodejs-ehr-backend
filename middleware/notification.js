@@ -18,7 +18,7 @@ async function createNotification(req, res) {
         .then(async (user) => {
           User.findOneAndUpdate(
             { username },
-            { notifications: [...notifications, notif._id] }
+            { notifications: [...user.notifications, notif._id] }
           );
         })
         .then((notif) => {

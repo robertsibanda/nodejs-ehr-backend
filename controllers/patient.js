@@ -236,7 +236,8 @@ const approve = async (req, res) => {
             { calender: [...calender, id] }
           ).then(async (pat) => {
             res.json({ success: "appointment approved" });
-            const notificationContent = `User  ${req.user.username} has approved an appintment with you on ${date} at ${time}`;
+            const notificationContent = `User  ${req.user.username} 
+            has approved an appintment with you on ${date} at ${time}`;
 
             let notification = {
               other: event._id,

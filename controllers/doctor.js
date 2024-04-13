@@ -63,7 +63,7 @@ const CreatePrescription = async (req, res) => {
   await Prescritpion.create({
     patient: person,
     medicine,
-    date: new Date().toDateString(),
+    date: new Date(),
     note,
     qty,
     doctor: req.user.username,
@@ -90,7 +90,7 @@ const CreateNote = async (req, res) => {
   const note = {
     doctor: req.user.username,
     content,
-    date: new Date().toLocaleDateString(),
+    date: new Date(),
   };
   await Patient.findOneAndUpdate(
     { username: person },
@@ -129,25 +129,38 @@ const CreateDiagnosis = async (req, res) => {
 };
 
 const CreateAllege = async (req, res) => {
-  const { person, allege, note } = req.body;
-  if (!person || !allegy || !note)
+  const { person, allege, note, reaction } = req.body;
+  if (!person || !allege || !note || !reaction)
     return res.json({ error: "missing information" });
 
-  await Patient.findOne({ username: person }).then(async (patient) => {
-    await Patient.findOneAndUpdate(
-      { username: patient.username },
-      {
-        alleges: [
-          ...patient.alleges,
-          {
-            allege,
-            note,
-            date: new Date().toDateString(),
-          },
-        ],
-      }
-    );
-  });
+  await Patient.findOne({ username: person })
+    .then(async (patient) => {
+      patient.alleges
+        .forEach((all) => {
+          if (all.allege == allege) {
+            return res.json({ error: "allege already registred" });
+          }
+        })
+        .then(async (re) => {
+          await Patient.findOneAndUpdate(
+            { username: patient.username },
+            {
+              alleges: [
+                ...patient.alleges,
+                {
+                  allege,
+                  note,
+                  reaction,
+                  date: new Date(),
+                },
+              ],
+            }
+          );
+        });
+    })
+    .catch((err) => {
+      console.log({ Error: err.message });
+    });
 };
 
 const ViewInformation = async (req, res) => {
@@ -220,7 +233,7 @@ const ViewInformation = async (req, res) => {
     res.json({ doctors: people });
   } else if (category === "diagnosis") {
     return res.json({ diagnoses: patient.illnesses });
-  } else if (category == "allege") {
+  } else if (category == "alleges") {
     return res.json({ alleges: patient.alleges });
   }
 };
@@ -353,7 +366,7 @@ const CreateResult = async (req, res) => {
               test_code,
               result,
               result_code,
-              date: new Date().toDateString(),
+              date: new Date(),
             },
           ],
         }

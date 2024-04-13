@@ -19,7 +19,7 @@ const Patient = mongoose.Schema({
   },
 
   requested: [],
-
+  alleges: [],
   results: [],
   doctors: [], // *{ usernames }
   notes: [], // *{ text, date, doctor }
