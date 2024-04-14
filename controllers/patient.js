@@ -2,8 +2,6 @@ const Doctor = require("../models/doctor");
 const Patient = require("../models/patient");
 const User = require("../models/user");
 const Notification = require("../models/notification");
-const Event = require("../models/event");
-const Relation = require("../models/relation");
 const Illness = require("../models/illness");
 const Prescritpion = require("../models/prescription");
 

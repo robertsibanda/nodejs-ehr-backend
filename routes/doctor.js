@@ -9,6 +9,7 @@ const {
   CreateNote,
   CreateDiagnosis,
   ViewInformation,
+  CreateAppointment,
   approve,
 } = require("../controllers/doctor");
 
@@ -16,6 +17,7 @@ const { auth } = require("../middleware/authentication");
 const { notification } = require("../middleware/notification");
 
 router.route("/approve").post(auth, approve);
+router.route("/appointment").post(auth, CreateAppointment);
 router.route("/note").post(auth, CreateNote);
 router.route("/allege").post(auth, CreateAllege);
 router.route("/result").post(auth, CreateResult);

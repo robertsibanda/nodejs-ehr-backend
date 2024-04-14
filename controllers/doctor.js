@@ -2,13 +2,12 @@
 
 const Patient = require("../models/patient");
 const Doctor = require("../models/doctor");
-const Note = require("../models/notes");
 const Prescritpion = require("../models/prescription");
-const Disease = require("../models/illness");
 const illness = require("../models/illness");
 const Notification = require("../models/notification");
 const User = require("../models/user");
 const patient = require("../models/patient");
+const Appointment = require("../models/appointment");
 
 const AddPatient = async (req, res) => {
   // TODO create notification
@@ -406,6 +405,49 @@ async function createNotification(notification, req) {
     });
 }
 
+const CreateAppointment = async (req, res) => {
+  const { person, year, month, day, hour, minute, description } = req.body;
+  await Appointment.findOne({
+    doctor: req.user.username,
+    year,
+    month,
+    day,
+    hour,
+    minute,
+  })
+    .then(async (appointment) => {
+      if (appointment !== null)
+        return res.json({ error: "doctor already occupied at this time" });
+      await Appointment.findOne({
+        patient: person,
+        year,
+        month,
+        day,
+        hour,
+        minute,
+      }).then(async (app) => {
+        if (app !== null)
+          return res.json({ error: "patient already occupied at this time" });
+        await Appointment.create({
+          doctor: req.user.username,
+          patient: person,
+          year,
+          day,
+          description,
+          month,
+          hour,
+          minute,
+          status: "0",
+        }).then((ap) => {
+          res.json({ success: "appointment created succeffully" });
+        });
+      });
+    })
+    .catch((err) => {
+      res.json({ error: err.message });
+    });
+};
+
 module.exports = {
   CreatePrescription,
   DeletePatient,
@@ -415,5 +457,6 @@ module.exports = {
   CreateResult,
   ViewInformation,
   CreateNote,
+  CreateAppointment,
   approve,
 };

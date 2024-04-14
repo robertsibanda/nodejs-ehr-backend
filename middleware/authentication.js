@@ -8,7 +8,7 @@ const Token = require("../models/token");
 
 const auth = async (req, res, next) => {
   //console.log("Header : ", req.headers);
-  //console.log("Body : ", req.body);
+  console.log("Body : ", req.body);
   let tokenInfo = null;
 
   const { authorization } = req.body;

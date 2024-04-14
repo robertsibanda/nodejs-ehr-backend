@@ -1,8 +1,7 @@
-const Event = require("../models/event");
 const Patient = require("../models/patient");
 const Doctor = require("../models/doctor");
 const User = require("../models/user");
-const Relation = require("../models/relation");
+const Appointment = require("../models/appointment");
 
 const ViewProfileInformation = async (req, res) => {
   //get user iformation for profile viewing
@@ -25,13 +24,12 @@ const SearchPerson = async (req, res) => {
   console.log("Searchinf for : ", req.body);
   const { search_string, user_type } = req.body;
 
-  //TODO fix double request problem
   if (user_type === "doctor") {
     let doctors = await Doctor.find({});
     let patient = await Patient.findOne({ username: req.user.username });
 
     foundPeople = doctors.filter((p) => {
-      if (p.fullName.toLowerCase().includes(search_string)) {
+      if (p.fullName.toLowerCase().includes(search_string.toLowerCase())) {
         return p;
       }
     });
@@ -68,7 +66,7 @@ const SearchPerson = async (req, res) => {
     let doctor = await Doctor.findOne({ username: req.user.username });
 
     foundPeople = patients.filter((p) => {
-      if (p.fullName.toLowerCase().includes(search_string)) {
+      if (p.fullName.toLowerCase().includes(search_string.toLowerCase())) {
         return p;
       }
     });
@@ -107,77 +105,6 @@ const SearchPerson = async (req, res) => {
   }
 };
 
-const CreateAppointment = async (req, res) => {
-  // TODO create notifications
-  const { person, title, date, time } = req.body;
-
-  let doctor = null;
-  let patient = null;
-  let approver = null;
-
-  if (!person || !title || !date || !time)
-    return res.json({ error: "missing request information" });
-
-  if (req.user.userType == "doctor") {
-    doctor = req.ser.username;
-    patient = person;
-    approver = patient;
-  } else if (req.user.userType == "patient") {
-    doctor = person;
-    patient = req.user.username;
-    approver = doctor;
-  }
-
-  await Event.findOne({ doctor, patient, date, time }).then(async (event) => {
-    if (event) return res.json({ error: "Time already taken" });
-
-    await Event.findOne({ doctor, date, time }).then(async (event) => {
-      if (event) {
-        if (req.user.userType == "doctor")
-          return res.json({ error: "You are already booked for that time" });
-        return res.json({ error: "Doctor already booked at that time" });
-      }
-
-      await Event.findOne({ patient, date, time }).then(async (event) => {
-        if (event) {
-          if (req.user.userType == "doctor")
-            return res.json({ error: "Patient already booked for that time" });
-          return res.json({
-            error: "You already habe an appointment for that time",
-          });
-        }
-
-        await Event.create({
-          doctor,
-          patient,
-          title,
-          date,
-          time,
-          approved: false,
-          rejected: false,
-          approver,
-          status: "0",
-        }).then((event) => {
-          res.json({ sucess: "event created successfully" });
-        });
-      });
-    });
-  });
-};
-
-const UpdateAppointment = async (req, res) => {
-  // TODO create notifications
-  const { appointment, approved, rejected } = req.body;
-  if (!appointment || !approved || !rejected)
-    return res.json({ error: "missing reqest data" });
-
-  Event.findOneAndUpdate({ _id: appointment }, { approved, rejected }).then(
-    (app) => {
-      res.json({ sucess: "appointment updated" });
-    }
-  );
-};
-
 const UpdateRelationShip = async (req, res) => {
   const { relationship, approved, rejected } = req.body;
   if (!appointment || !approved || !rejected)
@@ -185,13 +112,43 @@ const UpdateRelationShip = async (req, res) => {
 };
 
 const DeleteAppointment = async (req, res) => {
-  //TODO create notification
+  const { id } = req.body;
+  await Appointment.findOneAndDelete({ _id: id })
+    .then((app) => {
+      res.json({ success: "appointment deleted" });
+    })
+    .catch((err) => {
+      res.json({ error: err.message });
+    });
+};
+
+const GetAppointments = async (req, res) => {
+  const { year, day, month, userType } = req.body;
+
+  let appointments = [];
+
+  if (userType == "doctor") {
+    appointments = await Appointment.find({
+      doctor: req.user.username,
+      year,
+      day,
+      month,
+    });
+  } else if (userType == "patient") {
+    appointments = await Appointment.find({
+      patient: req.user.username,
+      year,
+      day,
+      month,
+    });
+  }
+
+  res.json({ appointments });
 };
 
 module.exports = {
   SearchPerson,
-  CreateAppointment,
-  UpdateAppointment,
   DeleteAppointment,
   ViewProfileInformation,
+  GetAppointments,
 };

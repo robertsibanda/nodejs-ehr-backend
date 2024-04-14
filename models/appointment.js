@@ -1,6 +1,6 @@
 const mongoose = require("mongoose");
 
-const Event = mongoose.Schema({
+const Appointment = mongoose.Schema({
   doctor: {
     type: String,
     required: true,
@@ -11,38 +11,39 @@ const Event = mongoose.Schema({
     required: true,
   },
 
-  title: {
+  description: {
     type: String,
     required: true,
   },
 
-  date: {
+  day: {
     type: String,
     required: true,
   },
 
-  time: {
+  month: {
     type: String,
     required: true,
   },
 
-  approved: {
-    type: Boolean,
+  year: {
+    type: String,
+    required: true,
   },
 
-  rejected: {
-    type: Boolean,
+  hour: {
+    type: String,
+    required: true,
   },
 
-  approver: {
+  minute: {
     type: String,
     required: true,
   },
 
   status: {
     type: String,
-    required: true,
   },
 });
 
-module.exports = mongoose.model("events", Event);
+module.exports = mongoose.model("appointments", Appointment);
