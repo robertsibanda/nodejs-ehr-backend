@@ -7,8 +7,6 @@ const Token = require("../models/token");
 //token = "Bearer token-value"
 
 const auth = async (req, res, next) => {
-  //console.log("Header : ", req.headers);
-  console.log("Body : ", req.body);
   let tokenInfo = null;
 
   const { authorization } = req.body;
@@ -26,7 +24,7 @@ const auth = async (req, res, next) => {
     process.env.ACCESS_SECRET,
     async (err, data) => {
       if (err) return res.json({ error: "Session expired" });
-      //console.log("Token verified : ", data);
+      
       const { username, _id, userType, fullName } = data;
 
       const tokenExists = await Token.findOne({ accessToken: token })
