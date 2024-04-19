@@ -123,27 +123,35 @@ const DeleteAppointment = async (req, res) => {
 };
 
 const GetAppointments = async (req, res) => {
-  const { year, day, month, userType } = req.body;
+  const { year, day, month, user_type } = req.body;
 
-  let appointments = [];
+  console.log("Requesting appointments")
 
-  if (userType == "doctor") {
-    appointments = await Appointment.find({
+  if (user_type == "doctor") {
+    console.log("user is a doctor")
+    await Appointment.find({
       doctor: req.user.username,
       year,
       day,
       month,
-    });
-  } else if (userType == "patient") {
-    appointments = await Appointment.find({
+    }).then(app => {
+      console.log("appointments found : ", app)
+      return res.json({ appointments : app})
+    })
+
+  } else if (user_type == "patient") {
+    await Appointment.find({
       patient: req.user.username,
       year,
       day,
       month,
-    });
+    }).then(app => {
+      console.log('appointments found : ' , app)
+      return res.json({ appointments: app });
+    })
   }
 
-  res.json({ appointments });
+  
 };
 
 module.exports = {
